@@ -22,7 +22,7 @@ fn orbit_condition(cam_q: Query<&ThirdPersonCamera>) -> bool {
     let Ok(cam) = cam_q.single() else {
         return true;
     };
-    return cam.cursor_lock_active;
+    cam.cursor_lock_active
 }
 
 // heavily referenced https://bevy-cheatbook.github.io/cookbook/pan-orbit-camera.html
@@ -49,10 +49,7 @@ pub fn orbit_mouse(
 
     if rotation.length_squared() > 0.0 {
         let window = window_q.single().unwrap();
-        let delta_x = {
-            let delta = rotation.x / window.width() * std::f32::consts::PI * cam.sensitivity.x;
-            delta
-        };
+        let delta_x = rotation.x / window.width() * std::f32::consts::PI * cam.sensitivity.x;
 
         let delta_y = rotation.y / window.height() * PI * cam.sensitivity.y;
         let yaw = Quat::from_rotation_y(-delta_x);
