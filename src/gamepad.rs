@@ -73,13 +73,10 @@ pub fn orbit_gamepad(
     if cam.mouse_orbit_button_enabled && !gamepad.pressed(cam.gamepad_settings.mouse_orbit_button) {
         return;
     }
-
-    let x_axis = gamepad.right_stick().x;
-    let y_axis = gamepad.right_stick().y;
+    let (x, y) = (gamepad.right_stick().x, gamepad.right_stick().y);
 
     let deadzone = 0.5;
     let mut rotation = Vec2::ZERO;
-    let (x, y) = (x_axis, y_axis);
     if x.abs() > deadzone || y.abs() > deadzone {
         rotation = Vec2::new(x, y);
     }

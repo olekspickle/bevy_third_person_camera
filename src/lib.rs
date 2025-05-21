@@ -148,6 +148,13 @@ impl Default for ThirdPersonCamera {
     }
 }
 
+impl ThirdPersonCamera {
+    pub fn with_custom_settings(mut self, gamepad_settings: CustomGamepadSettings) -> Self {
+        self.gamepad_settings = gamepad_settings;
+        self
+    }
+}
+
 /// Sets the zoom bounds (min & max)
 pub struct Zoom {
     pub min: f32,
@@ -193,19 +200,9 @@ impl Offset {
 /// use bevy::prelude::*;
 /// use bevy_third_person_camera::{CustomGamepadSettings, ThirdPersonCamera};
 /// fn spawn_camera(mut commands: Commands) {
-///    let gamepad = Gamepad::new(0);
+///    let settings =  CustomGamepadSettings::default()
 ///    commands.spawn((
-///        ThirdPersonCamera {
-///            gamepad_settings: CustomGamepadSettings {
-///                aim_button: GamepadButton::new(gamepad, GamepadButtonType::LeftTrigger2),
-///                mouse_orbit_button: GamepadButton::new(gamepad, GamepadButtonType::LeftTrigger),
-///                offset_toggle_button: GamepadButton::new(gamepad, GamepadButtonType::DPadRight),
-///                sensitivity: Vec2::new(7.0, 4.0),
-///                zoom_in_button: GamepadButton::new(gamepad, GamepadButtonType::DPadUp),
-///                zoom_out_button: GamepadButton::new(gamepad, GamepadButtonType::DPadDown),
-///            },
-///            ..default()
-///        },
+///        ThirdPersonCamera::default().with_custom_settings(settings)
 ///        Camera3dBundle::default(),
 ///    ));
 /// }
@@ -360,7 +357,7 @@ fn aim(
     }
 }
 
-pub fn zoom_condition(cam_q: Query<&ThirdPersonCamera, With<ThirdPersonCamera>>) -> bool {
+pub fn zoom_condition(cam_q: Query<&ThirdPersonCamera>) -> bool {
     let Ok(cam) = cam_q.single() else {
         return false;
     };
@@ -368,7 +365,7 @@ pub fn zoom_condition(cam_q: Query<&ThirdPersonCamera, With<ThirdPersonCamera>>)
 }
 
 // only run toggle_x_offset if `offset_toggle_enabled` is true
-fn toggle_x_offset_condition(cam_q: Query<&ThirdPersonCamera, With<ThirdPersonCamera>>) -> bool {
+fn toggle_x_offset_condition(cam_q: Query<&ThirdPersonCamera>) -> bool {
     let Ok(cam) = cam_q.single() else {
         return false;
     };
@@ -377,7 +374,7 @@ fn toggle_x_offset_condition(cam_q: Query<&ThirdPersonCamera, With<ThirdPersonCa
 
 // inverts the x offset. Example: left shoulder view -> right shoulder view & vice versa
 fn toggle_x_offset(
-    mut cam_q: Query<&mut ThirdPersonCamera, With<ThirdPersonCamera>>,
+    mut cam_q: Query<&mut ThirdPersonCamera>,
     keys: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
     btns: Query<&Gamepad>,
