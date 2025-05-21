@@ -13,9 +13,7 @@ use mouse::MousePlugin;
 /// ```
 /// use bevy::prelude::*;
 /// use bevy_third_person_camera::ThirdPersonCameraPlugin;
-/// fn main() {
-///     App::new().add_plugins(ThirdPersonCameraPlugin);
-/// }
+/// App::new().add_plugins(ThirdPersonCameraPlugin);
 /// ```
 pub struct ThirdPersonCameraPlugin;
 
@@ -299,6 +297,7 @@ fn aim_condition(cam_q: Query<&ThirdPersonCamera, With<ThirdPersonCamera>>) -> b
     cam.aim_enabled
 }
 
+#[allow(clippy::type_complexity)]
 fn aim(
     mut cam_q: Query<
         (&mut ThirdPersonCamera, &Transform),
@@ -317,10 +316,7 @@ fn aim(
         return;
     };
 
-    let gamepad = match gamepad_q.single() {
-        Ok(value) => Some(value),
-        Err(_) => None,
-    };
+    let gamepad = gamepad_q.single().ok();
 
     let is_gamepad_aiming = match gamepad {
         Some(gp) => gp.pressed(cam.gamepad_settings.aim_button),
@@ -351,17 +347,15 @@ fn aim(
         } else {
             cam.zoom.radius -= zoom_factor;
         }
-    } else {
-        if let Some(radius_copy) = cam.zoom.radius_copy {
-            let zoom_factor = (radius_copy / cam.aim_zoom) * cam.aim_speed * time.delta_secs();
+    } else if let Some(radius_copy) = cam.zoom.radius_copy {
+        let zoom_factor = (radius_copy / cam.aim_zoom) * cam.aim_speed * time.delta_secs();
 
-            // stop zooming out if current radius is greater than original radius
-            if cam.zoom.radius >= radius_copy || cam.zoom.radius + zoom_factor >= radius_copy {
-                cam.zoom.radius = radius_copy;
-                cam.zoom.radius_copy = None;
-            } else {
-                cam.zoom.radius += (radius_copy / cam.aim_zoom) * cam.aim_speed * time.delta_secs();
-            }
+        // stop zooming out if current radius is greater than original radius
+        if cam.zoom.radius >= radius_copy || cam.zoom.radius + zoom_factor >= radius_copy {
+            cam.zoom.radius = radius_copy;
+            cam.zoom.radius_copy = None;
+        } else {
+            cam.zoom.radius += (radius_copy / cam.aim_zoom) * cam.aim_speed * time.delta_secs();
         }
     }
 }
@@ -370,7 +364,7 @@ pub fn zoom_condition(cam_q: Query<&ThirdPersonCamera, With<ThirdPersonCamera>>)
     let Ok(cam) = cam_q.single() else {
         return false;
     };
-    return cam.zoom_enabled && cam.cursor_lock_active;
+    cam.zoom_enabled && cam.cursor_lock_active
 }
 
 // only run toggle_x_offset if `offset_toggle_enabled` is true
