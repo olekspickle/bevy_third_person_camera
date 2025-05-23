@@ -1,7 +1,6 @@
-use std::f32::consts::PI;
-
 use crate::{zoom_condition, ThirdPersonCamera};
 use bevy::{prelude::*, window::PrimaryWindow};
+use std::f32::consts::PI;
 
 pub struct GamePadPlugin;
 
@@ -83,14 +82,12 @@ pub fn orbit_gamepad(
 
     if rotation.length_squared() > 0.0 {
         let window = window_q.single().unwrap();
-        let delta_x = rotation.x / window.width()
-            * std::f32::consts::PI
-            * 2.0
-            * cam.gamepad_settings.sensitivity.x;
-
+        let delta_x = rotation.x / window.width() * PI * 2.0 * cam.gamepad_settings.sensitivity.x;
         let delta_y = -rotation.y / window.height() * PI * cam.gamepad_settings.sensitivity.y;
+
         let yaw = Quat::from_rotation_y(-delta_x);
         let pitch = Quat::from_rotation_x(-delta_y);
+
         cam_transform.rotation = yaw * cam_transform.rotation; // rotate around global y axis
 
         let new_rotation = cam_transform.rotation * pitch;

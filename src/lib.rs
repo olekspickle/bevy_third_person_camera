@@ -1,6 +1,8 @@
 mod gamepad;
 mod mouse;
 
+use std::f32::consts::PI;
+
 use bevy::{
     prelude::*,
     window::{CursorGrabMode, PrimaryWindow},
@@ -72,6 +74,8 @@ pub struct ThirdPersonCamera {
     /// Can be used for a floor bound, side change or artistic dramatic effect
     /// where you could only move camera in a narrow corridor.
     pub bounds: Vec<Bound>,
+    #[doc(hidden)]
+    pub current_pitch: f32,
     /// Flag to indicate if the cursor lock toggle functionality is turned on.
     /// When enabled and the cursor lock is NOT active, the mouse can freely move about the window without the camera's transform changing.
     /// Example usage: Browsing a character inventory without moving the camera.
@@ -112,6 +116,9 @@ pub struct ThirdPersonCamera {
     /// The speed at which the x offset will transition.
     /// Default is 5.0
     pub offset_toggle_speed: f32,
+    /// Pitch limit in radians.
+    /// Defaults to just under 90 degrees (PI/2 - 0.05) = 89.5
+    pub pitch_limit: f32,
     /// Flag to indicate whether a camera zoom is applied or not.
     /// Default is true
     pub zoom_enabled: bool,
@@ -134,6 +141,7 @@ impl Default for ThirdPersonCamera {
             aim_speed: 3.0,
             aim_zoom: 0.7,
             bounds: vec![Bound::NO_FLIP],
+            current_pitch: 0.0,
             cursor_lock_key: KeyCode::Space,
             cursor_lock_toggle_enabled: true,
             gamepad_settings: CustomGamepadSettings::default(),
@@ -146,6 +154,7 @@ impl Default for ThirdPersonCamera {
             offset_toggle_enabled: false,
             offset_toggle_speed: 5.0,
             offset_toggle_key: KeyCode::KeyE,
+            pitch_limit: PI / 2.0 - 0.05,
             zoom_enabled: true,
             zoom: Zoom::new(1.5, 3.0),
             zoom_sensitivity: 1.0,
