@@ -203,20 +203,11 @@ impl Bound {
         normal: Vec3::NEG_Y, // pointing downward
         point: Vec3::ZERO,   // since this is an orientation-only check, point can be origin
     };
-    // Ensures camera doesn't go lower thatn floor
+    // Ensures camera doesn't go lower than floor
     pub const ABOVE_FLOOR: Bound = Bound {
         normal: Vec3::Y,   // pointing downward
         point: Vec3::ZERO, // since this is an orientation-only check, point can be origin
     };
-}
-
-impl Default for Bound {
-    fn default() -> Self {
-        Self {
-            normal: Vec3::Y,   // "up" vector: limits camera from going below y=0
-            point: Vec3::ZERO, // floor at y = 0
-        }
-    }
 }
 
 /// Sets the zoom bounds (min & max)
