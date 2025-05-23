@@ -1,12 +1,10 @@
-use std::f32::consts::PI;
-
+use crate::{zoom_condition, ThirdPersonCamera};
 use bevy::{
     input::mouse::{MouseMotion, MouseWheel},
     prelude::*,
     window::PrimaryWindow,
 };
-
-use crate::{zoom_condition, ThirdPersonCamera};
+use std::f32::consts::PI;
 
 pub struct MousePlugin;
 
@@ -26,9 +24,10 @@ fn orbit_condition(cam_q: Query<&ThirdPersonCamera>) -> bool {
 }
 
 // heavily referenced https://bevy-cheatbook.github.io/cookbook/pan-orbit-camera.html
+#[allow(clippy::type_complexity)]
 pub fn orbit_mouse(
     window_q: Query<&Window, With<PrimaryWindow>>,
-    mut cam_q: Query<(&ThirdPersonCamera, &mut Transform), With<ThirdPersonCamera>>,
+    mut cam_q: Query<(&ThirdPersonCamera, &mut Transform)>,
     mouse: Res<ButtonInput<MouseButton>>,
     mut mouse_evr: EventReader<MouseMotion>,
 ) {
@@ -49,19 +48,39 @@ pub fn orbit_mouse(
 
     if rotation.length_squared() > 0.0 {
         let window = window_q.single().unwrap();
-        let delta_x = rotation.x / window.width() * std::f32::consts::PI * cam.sensitivity.x;
-
+        // Calculate pitch/yaw deltas
+        let delta_x = rotation.x / window.width() * PI * cam.sensitivity.x;
         let delta_y = rotation.y / window.height() * PI * cam.sensitivity.y;
+
+        // Current rotation
         let yaw = Quat::from_rotation_y(-delta_x);
         let pitch = Quat::from_rotation_x(-delta_y);
-        cam_transform.rotation = yaw * cam_transform.rotation; // rotate around global y axis
+        let new_rotation = yaw * cam_transform.rotation * pitch;
 
-        // Calculate the new rotation without applying it to the camera yet
-        let new_rotation = cam_transform.rotation * pitch;
-
-        // check if new rotation will cause camera to go beyond the 180 degree vertical bounds
+        // Orientation check for "no flip"
+        let mut passes_bounds = true;
         let up_vector = new_rotation * Vec3::Y;
-        if up_vector.y > 0.0 {
+
+        for bound in &cam.bounds {
+            // Check NO_FLIP manually
+            if bound.normal == Vec3::NEG_Y && bound.point == Vec3::ZERO {
+                if up_vector.y <= 0.0 {
+                    passes_bounds = false;
+                    break;
+                }
+            } else {
+                // Position-based bounds (e.g. floor)
+                let rot_matrix = Mat3::from_quat(new_rotation);
+                let new_position = rot_matrix * Vec3::new(0.0, 0.0, cam.zoom.radius);
+                let to_cam = new_position - bound.point;
+                if bound.normal.dot(to_cam) < 0.0 {
+                    passes_bounds = false;
+                    break;
+                }
+            }
+        }
+
+        if passes_bounds {
             cam_transform.rotation = new_rotation;
         }
     }
