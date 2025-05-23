@@ -68,6 +68,10 @@ pub struct ThirdPersonCamera {
     /// The smaller the value, the greater the zoom distance. 0.1 would essentially look like 'first person'.
     /// Default is 0.7
     pub aim_zoom: f32,
+    /// Boundaries for orbiting.
+    /// Can be used for a floor bound, side change or artistic dramatic effect
+    /// where you could only move camera in a narrow corridor.
+    pub bounds: Vec<Bound>,
     /// Flag to indicate if the cursor lock toggle functionality is turned on.
     /// When enabled and the cursor lock is NOT active, the mouse can freely move about the window without the camera's transform changing.
     /// Example usage: Browsing a character inventory without moving the camera.
@@ -129,6 +133,7 @@ impl Default for ThirdPersonCamera {
             aim_button: MouseButton::Right,
             aim_speed: 3.0,
             aim_zoom: 0.7,
+            bounds: vec![Bound::NO_FLIP],
             cursor_lock_key: KeyCode::Space,
             cursor_lock_toggle_enabled: true,
             gamepad_settings: CustomGamepadSettings::default(),
@@ -152,6 +157,56 @@ impl ThirdPersonCamera {
     pub fn with_custom_settings(mut self, gamepad_settings: CustomGamepadSettings) -> Self {
         self.gamepad_settings = gamepad_settings;
         self
+    }
+}
+
+/// Bounds to restrict camera movement
+///
+/// Example:
+/// ```rust,no_run
+///
+/// let bounds = vec![
+///     // Ground plane: don't go below y = 0
+///     Bound {
+///         normal: Vec3::Y,
+///         point: Vec3::ZERO,
+///     },
+///     // Left wall: x ≥ -5.0
+///     Bound {
+///         normal: Vec3::X,
+///         point: Vec3::new(-5.0, 0.0, 0.0),
+///     },
+///     // Right wall: x ≤ 5.0
+///     Bound {
+///         normal: -Vec3::X,
+///         point: Vec3::new(5.0, 0.0, 0.0),
+///     },
+/// ],
+/// ```
+pub struct Bound {
+    pub normal: Vec3,
+    pub point: Vec3,
+}
+
+impl Bound {
+    // Ensures camera doesn't flip downside
+    pub const NO_FLIP: Bound = Bound {
+        normal: Vec3::NEG_Y, // pointing downward
+        point: Vec3::ZERO,   // since this is an orientation-only check, point can be origin
+    };
+    // Ensures camera doesn't go lower thatn floor
+    pub const ABOVE_FLOOR: Bound = Bound {
+        normal: Vec3::Y,   // pointing downward
+        point: Vec3::ZERO, // since this is an orientation-only check, point can be origin
+    };
+}
+
+impl Default for Bound {
+    fn default() -> Self {
+        Self {
+            normal: Vec3::Y,   // "up" vector: limits camera from going below y=0
+            point: Vec3::ZERO, // floor at y = 0
+        }
     }
 }
 
