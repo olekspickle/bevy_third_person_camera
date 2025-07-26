@@ -74,8 +74,6 @@ pub struct ThirdPersonCamera {
     /// Can be used for a floor bound, side change or artistic dramatic effect
     /// where you could only move camera in a narrow corridor.
     pub bounds: Vec<Bound>,
-    #[doc(hidden)]
-    pub current_pitch: f32,
     /// Flag to indicate if the cursor lock toggle functionality is turned on.
     /// When enabled and the cursor lock is NOT active, the mouse can freely move about the window without the camera's transform changing.
     /// Example usage: Browsing a character inventory without moving the camera.
@@ -141,7 +139,6 @@ impl Default for ThirdPersonCamera {
             aim_speed: 3.0,
             aim_zoom: 0.7,
             bounds: vec![Bound::NO_FLIP],
-            current_pitch: 0.0,
             cursor_lock_key: KeyCode::Space,
             cursor_lock_toggle_enabled: true,
             gamepad_settings: CustomGamepadSettings::default(),
@@ -368,14 +365,11 @@ fn aim(
         return;
     };
 
-    let gamepad = gamepad_q.single().ok();
-
-    let is_gamepad_aiming = match gamepad {
-        Some(gp) => gp.pressed(cam.gamepad_settings.aim_button),
-        None => false,
-    };
-
     // check if aim button was pressed
+    let is_gamepad_aiming = gamepad_q
+        .single()
+        .map(|gp| gp.pressed(cam.gamepad_settings.aim_button))
+        .unwrap_or_default();
     let is_mouse_aiming = mouse.pressed(cam.aim_button);
 
     if is_mouse_aiming || is_gamepad_aiming {

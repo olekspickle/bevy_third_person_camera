@@ -33,7 +33,7 @@ pub fn orbit_mouse(
 ) {
     let mut rotation = Vec2::ZERO;
     for ev in mouse_evr.read() {
-        rotation = ev.delta;
+        rotation += ev.delta;
     }
 
     let Ok((cam, mut cam_transform)) = cam_q.single_mut() else {
@@ -57,7 +57,6 @@ pub fn orbit_mouse(
         let pitch = Quat::from_rotation_x(-delta_y);
         let new_rotation = yaw * cam_transform.rotation * pitch;
 
-        // Orientation check for "no flip"
         let mut passes_bounds = true;
         let up_vector = new_rotation * Vec3::Y;
 
