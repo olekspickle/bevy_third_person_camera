@@ -3,7 +3,7 @@ mod mouse;
 
 use bevy::{
     prelude::*,
-    window::{CursorGrabMode, PrimaryWindow},
+    window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 use gamepad::GamePadPlugin;
 use mouse::MousePlugin;
@@ -34,7 +34,7 @@ impl Plugin for ThirdPersonCameraPlugin {
             .add_systems(
                 PostUpdate,
                 sync_player_camera
-                    .before(TransformSystem::TransformPropagate)
+                    .before(TransformSystems::Propagate)
                     .in_set(CameraSyncSet),
             );
     }
@@ -409,7 +409,7 @@ fn toggle_x_offset(
 fn toggle_cursor(
     mut cam_q: Query<&mut ThirdPersonCamera>,
     keys: Res<ButtonInput<KeyCode>>,
-    mut window_q: Query<&mut Window, With<PrimaryWindow>>,
+    mut window_q: Query<&mut CursorOptions, With<PrimaryWindow>>,
 ) {
     let Ok(mut cam) = cam_q.single_mut() else {
         return;
@@ -419,13 +419,13 @@ fn toggle_cursor(
         cam.cursor_lock_active = !cam.cursor_lock_active;
     }
 
-    if let Ok(mut window) = window_q.single_mut() {
+    if let Ok(mut cursor_options) = window_q.single_mut() {
         if cam.cursor_lock_active {
-            window.cursor_options.grab_mode = CursorGrabMode::Locked;
-            window.cursor_options.visible = false;
+            cursor_options.grab_mode = CursorGrabMode::Locked;
+            cursor_options.visible = false;
         } else {
-            window.cursor_options.grab_mode = CursorGrabMode::None;
-            window.cursor_options.visible = true;
+            cursor_options.grab_mode = CursorGrabMode::None;
+            cursor_options.visible = true;
         }
     }
 }
