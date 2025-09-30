@@ -52,35 +52,64 @@ pub fn orbit_mouse(
         let delta_x = rotation.x / window.width() * PI * cam.sensitivity.x;
         let delta_y = rotation.y / window.height() * PI * cam.sensitivity.y;
 
-        // Current rotation
+        // Yaw
         let yaw = Quat::from_rotation_y(-delta_x);
-        let pitch = Quat::from_rotation_x(-delta_y);
-        let new_rotation = yaw * cam_transform.rotation * pitch;
+        let yaw_rotation = yaw * cam_transform.rotation;
 
-        let mut passes_bounds = true;
-        let up_vector = new_rotation * Vec3::Y;
-
+        // Check bounds for yaw
+        let mut yaw_passes_bounds = true;
+        let up_vector_yaw = yaw_rotation * Vec3::Y;
         for bound in &cam.bounds {
-            // Check NO_FLIP manually
             if bound.normal == Vec3::NEG_Y && bound.point == Vec3::ZERO {
-                if up_vector.y <= 0.0 {
-                    passes_bounds = false;
+                if up_vector_yaw.y <= 0.0 {
+                    yaw_passes_bounds = false;
                     break;
                 }
             } else {
-                // Position-based bounds (e.g. floor)
-                let rot_matrix = Mat3::from_quat(new_rotation);
+                let rot_matrix = Mat3::from_quat(yaw_rotation);
                 let new_position = rot_matrix * Vec3::new(0.0, 0.0, cam.zoom.radius);
                 let to_cam = new_position - bound.point;
-                if bound.normal.dot(to_cam) < 0.0 {
-                    passes_bounds = false;
+                if bound.normal.dot(to_cam) < -0.001 {
+                    yaw_passes_bounds = false;
                     break;
                 }
             }
         }
 
-        if passes_bounds {
-            cam_transform.rotation = new_rotation;
+        let rotation_after_yaw = if yaw_passes_bounds {
+            yaw_rotation
+        } else {
+            cam_transform.rotation
+        };
+
+        // Pitch
+        let pitch = Quat::from_rotation_x(-delta_y);
+        let pitch_rotation = rotation_after_yaw * pitch;
+
+        // Check bounds for pitch
+        let mut pitch_passes_bounds = true;
+        let up_vector_pitch = pitch_rotation * Vec3::Y;
+        for bound in &cam.bounds {
+            if bound.normal == Vec3::NEG_Y && bound.point == Vec3::ZERO {
+                if up_vector_pitch.y <= 0.0 {
+                    pitch_passes_bounds = false;
+                    break;
+                }
+            } else {
+                let rot_matrix = Mat3::from_quat(pitch_rotation);
+                let new_position = rot_matrix * Vec3::new(0.0, 0.0, cam.zoom.radius);
+                let to_cam = new_position - bound.point;
+                if bound.normal.dot(to_cam) < -0.001 {
+                    pitch_passes_bounds = false;
+                    break;
+                }
+            }
+        }
+
+        if pitch_passes_bounds {
+            cam_transform.rotation = pitch_rotation;
+        } else {
+            cam_transform.rotation = rotation_after_yaw;
         }
     }
 
