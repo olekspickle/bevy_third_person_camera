@@ -6,7 +6,7 @@ use bevy::{
     window::PrimaryWindow,
 };
 
-use crate::{zoom_condition, ThirdPersonCamera};
+use crate::{ThirdPersonCamera, zoom_condition};
 
 pub struct MousePlugin;
 
@@ -76,11 +76,10 @@ fn zoom_mouse(mut scroll_evr: MessageReader<MouseWheel>, mut cam_q: Query<&mut T
         scroll += ev.y;
     }
 
-    if let Ok(mut cam) = cam_q.single_mut() {
-        if scroll.abs() > 0.0 {
-            let new_radius =
-                cam.zoom.radius - scroll * cam.zoom.radius * 0.1 * cam.zoom_sensitivity;
-            cam.zoom.radius = new_radius.clamp(cam.zoom.min, cam.zoom.max);
-        }
+    if let Ok(mut cam) = cam_q.single_mut()
+        && scroll.abs() > 0.0
+    {
+        let new_radius = cam.zoom.radius - scroll * cam.zoom.radius * 0.1 * cam.zoom_sensitivity;
+        cam.zoom.radius = new_radius.clamp(cam.zoom.min, cam.zoom.max);
     }
 }

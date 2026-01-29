@@ -1,7 +1,6 @@
-use std::f32::consts::PI;
-
-use crate::{zoom_condition, ThirdPersonCamera};
+use crate::{ThirdPersonCamera, zoom_condition};
 use bevy::{prelude::*, window::PrimaryWindow};
+use std::f32::consts::PI;
 
 pub struct GamePadPlugin;
 
