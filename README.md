@@ -170,6 +170,8 @@ When using third party physics engines such as bevy rapier 3d or avian 3d, you s
 
 | bevy | bevy_third_person_camera |
 | ---- | ------------------------ |
+| 0.18 | 0.4                      |
+| 0.17 | 0.3                      |
 | 0.16 | 0.2.1 - 0.3              |
 | 0.15 | 0.2.0                    |
 | 0.14 | 0.1.11 - 0.1.14          |

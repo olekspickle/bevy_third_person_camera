@@ -40,7 +40,7 @@ fn spawn_player(mut commands: Commands, assets: Res<AssetServer>) {
 }
 
 fn spawn_camera(mut commands: Commands) {
-    let camera = (
+    commands.spawn((
         Camera3d::default(),
         Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
         ThirdPersonCamera {
@@ -54,14 +54,12 @@ fn spawn_camera(mut commands: Commands) {
             zoom: Zoom::new(1.5, 3.0), // default
             ..default()
         },
-    );
-    commands.spawn(camera);
+    ));
 }
 
 fn spawn_world(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let floor: (Mesh3d, MeshMaterial3d<StandardMaterial>, Collider) = (
@@ -118,8 +116,7 @@ fn player_movement_keyboard(
 
         direction.y = 0.0;
         let movement = direction.normalize_or_zero() * player.speed * time.delta_secs();
-        linear_velocity.x += movement.x;
-        linear_velocity.z += movement.z;
+        linear_velocity.0 += movement;
 
         // rotate player to face direction he is currently moving
         if direction.length_squared() > 0.0 {
