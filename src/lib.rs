@@ -256,7 +256,7 @@ impl Default for CustomGamepadSettings {
 ///     ));
 /// }
 /// ```
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct ThirdPersonCameraTarget;
 
 fn sync_player_camera(
