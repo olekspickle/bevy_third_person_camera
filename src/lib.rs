@@ -1,12 +1,13 @@
-mod gamepad;
-mod mouse;
-
 use bevy::{
     prelude::*,
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
+use bevy_unified_input::*;
 use gamepad::GamePadPlugin;
 use mouse::MousePlugin;
+
+mod gamepad;
+mod mouse;
 
 /// # Examples
 ///
@@ -59,7 +60,7 @@ pub struct ThirdPersonCamera {
     pub aim_enabled: bool,
     /// The mouse aim button binding.
     /// Default is MouseButton::Right
-    pub aim_button: MouseButton,
+    pub aim_button: InputKind,
     /// The speed at which aiming occurs.
     /// Default is 3.0
     pub aim_speed: f32,
@@ -78,7 +79,7 @@ pub struct ThirdPersonCamera {
     pub cursor_lock_active: bool,
     /// The cursor lock toggle key binding.
     /// Default is KeyCode::Space
-    pub cursor_lock_key: KeyCode,
+    pub cursor_lock_key: InputKind,
     /// Custom gamepad settings.
     pub gamepad_settings: CustomGamepadSettings,
     /// Mouse x/y sensitivity
@@ -89,7 +90,7 @@ pub struct ThirdPersonCamera {
     pub mouse_orbit_button_enabled: bool,
     /// The mouse button binding to control when the orbiting occurs.
     /// Default is MouseButton:Middle
-    pub mouse_orbit_button: MouseButton,
+    pub mouse_orbit_button: InputKind,
     /// Flag to indicate whether there is a camera offset applied or not.
     /// Default is false
     pub offset_enabled: bool,
@@ -104,7 +105,7 @@ pub struct ThirdPersonCamera {
     pub offset_toggle_enabled: bool,
     /// The key binding of the offset toggle
     /// Default is KeyCode::KeyE
-    pub offset_toggle_key: KeyCode,
+    pub offset_toggle_key: InputKind,
     /// The speed at which the x offset will transition.
     /// Default is 5.0
     pub offset_toggle_speed: f32,
@@ -126,21 +127,21 @@ impl Default for ThirdPersonCamera {
     fn default() -> Self {
         ThirdPersonCamera {
             aim_enabled: false,
-            aim_button: MouseButton::Right,
+            aim_button: MouseButton::Right.into(),
             aim_speed: 3.0,
             aim_zoom: 0.7,
-            cursor_lock_key: KeyCode::Space,
+            cursor_lock_key: KeyCode::Space.into(),
             cursor_lock_toggle_enabled: true,
             gamepad_settings: CustomGamepadSettings::default(),
             cursor_lock_active: true,
             sensitivity: Vec2::new(1.0, 1.0),
             mouse_orbit_button_enabled: false,
-            mouse_orbit_button: MouseButton::Middle,
+            mouse_orbit_button: MouseButton::Middle.into(),
             offset_enabled: false,
             offset: Offset::new(0.5, 0.4),
             offset_toggle_enabled: false,
             offset_toggle_speed: 5.0,
-            offset_toggle_key: KeyCode::KeyE,
+            offset_toggle_key: KeyCode::KeyE.into(),
             zoom_enabled: true,
             zoom: Zoom::new(1.5, 3.0),
             zoom_sensitivity: 1.0,
@@ -296,14 +297,14 @@ fn aim_condition(cam_q: Query<&ThirdPersonCamera, With<ThirdPersonCamera>>) -> b
 
 #[allow(clippy::type_complexity)]
 fn aim(
+    time: Res<Time>,
+    mouse: Res<ButtonInput<MouseButton>>,
+    gamepad: Res<ButtonInput<GamepadButton>>,
     mut cam_q: Query<
         (&mut ThirdPersonCamera, &Transform),
         (With<ThirdPersonCamera>, Without<ThirdPersonCameraTarget>),
     >,
-    mouse: Res<ButtonInput<MouseButton>>,
     mut player_q: Query<&mut Transform, With<ThirdPersonCameraTarget>>,
-    gamepad_q: Query<&Gamepad>,
-    time: Res<Time>,
 ) {
     let Ok((mut cam, cam_transform)) = cam_q.single_mut() else {
         return;
@@ -313,17 +314,11 @@ fn aim(
         return;
     };
 
-    let gamepad = gamepad_q.single().ok();
-
-    let is_gamepad_aiming = match gamepad {
-        Some(gp) => gp.pressed(cam.gamepad_settings.aim_button),
-        None => false,
-    };
-
     // check if aim button was pressed
-    let is_mouse_aiming = mouse.pressed(cam.aim_button);
+    let is_aiming =
+        cam.aim_button.is_mouse_pressed(&mouse) || cam.aim_button.is_gamepad_pressed(&gamepad);
 
-    if is_mouse_aiming || is_gamepad_aiming {
+    if is_aiming {
         // rotate player or target to face direction he is aiming
         player_transform.look_to(*cam_transform.forward(), Vec3::Y);
 
@@ -374,16 +369,18 @@ fn toggle_x_offset_condition(cam_q: Query<&ThirdPersonCamera>) -> bool {
 
 // inverts the x offset. Example: left shoulder view -> right shoulder view & vice versa
 fn toggle_x_offset(
-    mut cam_q: Query<&mut ThirdPersonCamera>,
-    keys: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
     btns: Query<&Gamepad>,
+    keys: Res<ButtonInput<KeyCode>>,
+    gamepad: Res<ButtonInput<GamepadButton>>,
+    mut cam_q: Query<&mut ThirdPersonCamera>,
 ) {
     let Ok(mut cam) = cam_q.single_mut() else {
         return;
     };
 
-    let mut toggle_btn: bool = keys.just_pressed(cam.offset_toggle_key);
+    let mut toggle_btn: bool = cam.offset_toggle_key.is_key_pressed(&keys)
+        || cam.offset_toggle_key.is_gamepad_pressed(&gamepad);
 
     for btns in btns.iter() {
         // check if toggle btn was pressed
@@ -409,13 +406,15 @@ fn toggle_x_offset(
 fn toggle_cursor(
     mut cam_q: Query<&mut ThirdPersonCamera>,
     keys: Res<ButtonInput<KeyCode>>,
+    gamepad: Res<ButtonInput<GamepadButton>>,
     mut window_q: Query<&mut CursorOptions, With<PrimaryWindow>>,
 ) {
     let Ok(mut cam) = cam_q.single_mut() else {
         return;
     };
-
-    if keys.just_pressed(cam.cursor_lock_key) {
+    let lock_pressed = cam.cursor_lock_key.is_key_pressed(&keys)
+        || cam.cursor_lock_key.is_gamepad_pressed(&gamepad);
+    if lock_pressed {
         cam.cursor_lock_active = !cam.cursor_lock_active;
     }
 
