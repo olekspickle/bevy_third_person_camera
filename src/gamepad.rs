@@ -65,7 +65,12 @@ pub fn orbit_gamepad(
         return;
     };
 
-    let Ok(gamepad) = gamepad_q.single() else {
+    // controllers like the DualSense also expose motion sensors as a separate gamepad
+    let Some(gamepad) = gamepad_q.iter().max_by(|a, b| {
+        a.right_stick()
+            .length()
+            .total_cmp(&b.right_stick().length())
+    }) else {
         return;
     };
 

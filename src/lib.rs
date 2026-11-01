@@ -312,12 +312,10 @@ fn aim(
     let Ok(mut player_transform) = player_q.single_mut() else {
         return;
     };
-    let gamepad = gamepad_q.single().ok();
-
     // check if aim button was pressed
-    let is_gamepad_aiming = gamepad
-        .map(|g| g.pressed(cam.gamepad_settings.aim_button))
-        .unwrap_or_default();
+    let is_gamepad_aiming = gamepad_q
+        .iter()
+        .any(|g| g.pressed(cam.gamepad_settings.aim_button));
     let is_mouse_aiming = mouse.pressed(cam.aim_button);
 
     if is_mouse_aiming || is_gamepad_aiming {
